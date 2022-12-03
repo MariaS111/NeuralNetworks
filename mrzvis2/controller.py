@@ -1,59 +1,75 @@
+import copy
+
 import numpy as np
 
 
-def func_of_activation(x):
-    if x >= 0:
-        res = 1
-    else:
-        res = -1
-    return res
+class Converter:
+    def __init__(self):
+        self.files = ('T', 'F')
+
+    def create_pattern(self):
+        res = []
+        patterns, pattern = [], []
+        for i in self.files:
+            with open(f'{i}', 'r') as file:
+                res.append(file.read())
+        for i in res:
+            pattern = i.replace('.', '-1 ').replace('+', '1 ')
+            pattern = [[int(i)] for j in pattern.split('\n') for i in j.split()]
+            patterns.append(pattern)
+        return patterns
+
+    def read_noisy_pattern(self):
+        i = 'F1'
+        with open(f'{i}', 'r') as file:
+            res = file.read()
+        result = res.replace('.', '-1 ').replace('+', '1 ')
+        result = [[int(i)] for j in result.split('\n') for i in j.split()]
+        return result
+
+    def reverse_converter(self, data):
+        return data.reshape(10, 10)
+
+    def made_result_pattern(self, data):
+        res = data.tolist()
+        for i in range(len(res)):
+            res[i] = [['+' if i[j] == 1 else '.' for j in range(len(i))] for i in res]
+            res[i] = [''.join(i) for i in res[0]]
+        return res
 
 
-def activation_function(num):
-    return np.sign(num)
+class NeuralNetwork:
+    def __init__(self, patterns):
+        self.patterns = patterns
+        for i in range(len(self.patterns)):
+            self.patterns[i] = np.array(self.patterns[i])
 
+    def function_of_activation(self, num):
+        return -1 if num < 0 else 1
 
-def calculate(weight, matrix):
-    weighted_matrix = weight * matrix
-    return np.array(list(map(activation_function, weighted_matrix)))
+    def multiply(self, weight, matrix):
+        matrix = np.array(matrix)
+        sign = np.vectorize(self.function_of_activation)
+        result = sign(np.dot(weight, matrix))
+        #c = Converter()
+        for i in range(12):
+            result = sign(np.dot(weight, self.asynchronous_execution(result, matrix)))
+        return result
+        #c.reverse_converter(result)
 
+    def create_weight_matrix(self):
+        data = self.patterns
+        weights = np.array(np.zeros((self.patterns[0].size, self.patterns[0].size)))
+        for i in range(len(data)):
+            ups = np.dot((np.dot(weights, data[i]) - data[i]), (np.dot(weights, data[i]) - data[i]).T)
+            weights += ups / (np.dot(data[i].T, data[i]) - np.dot(np.dot(data[i].T, weights), data[i]))
+        return weights
 
-def get_size_of_matrix(matrix):
-    return matrix.flatten().size
-
-
-def make_weight_from_patterns(patterns):
-    size_of_matrix = get_size_of_matrix(patterns[0])
-    if size_of_matrix / (2 * np.log(size_of_matrix)) < len(patterns):
-        print("impossible")
-    summa_of_squared_patterns = sum(pattern * pattern.T for pattern in patterns)
-    weight_of_neural_net = summa_of_squared_patterns / size_of_matrix
-    for i in range(weight_of_neural_net.__len__()):
-        weight_of_neural_net[i, i] = 0
-    return weight_of_neural_net
-
-
-def multiplication(e, x):
-    return tuple(
-        tuple(func_of_activation(sum([e[i][k] * x[k][j] for k in range(len(x))])) for j in range(len(x[0]))) for i
-        in range(len(e)))
-
-
-def make_weights(e, x):
-    return tuple(
-        tuple(sum([e[i][k] * x[k][j] for k in range(len(x))]) for j in range(len(x[0]))) for i
-        in range(len(e)))
-
-
-def transposition(x):
-    return tuple(
-        tuple(x[i][j] for i in range(len(x))) for j in range(len(x[0])))
-
-
-def zeros(x):
-    return tuple(
-        tuple(0 if k == j else x[j][k] for k in range(len(x[j]))) for j in range(len(x)))
-
-
-def summ(m1, m2):
-    return tuple(tuple(m1[j][i] + m2[j][i] for i in range(len(m1[j]))) for j in range(len(m1)))
+    def asynchronous_execution(self, new_data, old_data):
+        result = copy.deepcopy(new_data)
+        for i in range(len(new_data)):
+            if i < len(new_data) // 2:
+                result[i][0] = new_data[i][0]
+            else:
+                result[i][0] = old_data[i][0]
+        return result
