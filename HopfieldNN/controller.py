@@ -1,5 +1,4 @@
 import copy
-
 import numpy as np
 
 
@@ -11,7 +10,7 @@ class Converter:
         res = []
         patterns, pattern = [], []
         for i in self.files:
-            with open(f'{i}', 'r') as file:
+            with open(f'sourse_patterns/{i}', 'r') as file:
                 res.append(file.read())
         for i in res:
             pattern = i.replace('.', '-1 ').replace('+', '1 ')
@@ -20,8 +19,8 @@ class Converter:
         return patterns
 
     def read_noisy_pattern(self):
-        i = 'F1'
-        with open(f'{i}', 'r') as file:
+        i = 'F2'
+        with open(f'noisy_patterns/{i}', 'r') as file:
             res = file.read()
         result = res.replace('.', '-1 ').replace('+', '1 ')
         result = [[int(i)] for j in result.split('\n') for i in j.split()]
