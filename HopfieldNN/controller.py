@@ -56,7 +56,16 @@ class NeuralNetwork:
         result = sign(np.dot(weight, matrix))
         for i in range(12):
             result = sign(np.dot(weight, self.asynchronous_execution(result, matrix)))
-        return result
+        k = 0
+        for j in self.patterns:
+            if np.array_equal(result, j):
+                return result
+            else:
+                k += 1
+        if k == len(self.patterns):
+            print('No such pattern!')
+            result = np.zeros((10, 10))
+            return result
 
     def create_weight_matrix(self):
         data = self.patterns
